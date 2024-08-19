@@ -128,7 +128,7 @@ translations.path = $${PREFIX}/share/$${TARGET}/translations
 translations.files = $$PWD/translations/*.qm
 
 # Automating generation .qm files from .ts files
-!system(python $$PWD/tool/translate_generation.py $$PWD): error("Failed to generate translation")
+!system(python3 $$PWD/tool/translate_generation.py $$PWD): error("Failed to generate translation")
 
 
 INSTALLS += target icon desktop translations
