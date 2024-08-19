@@ -1,12 +1,12 @@
 [Desktop Entry]
 Categories=Application;System;Settings
 Comment=A general Linux download
-Comment[zh_CN]=deepin 下载工具
+Comment[zh_CN]=GXDE 下载工具
 Encoding=UTF-8
-Exec=deepin-download
-Icon=deepin-download
-Name=Deepin Downloader
-Name[zh_CN]=深度下载器
+Exec=gxde-download
+Icon=gxde-download
+Name=GXDE Downloader
+Name[zh_CN]=GXDE 下载器
 StartupNotify=true
 Terminal=false
 Type=Application

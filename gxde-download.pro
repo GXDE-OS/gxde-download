@@ -3,4 +3,4 @@ CONFIG = ordered
 
 #include(config.pri)
 
-SUBDIRS +=  src/deepin-download.pro
+SUBDIRS +=  src/gxde-download.pro

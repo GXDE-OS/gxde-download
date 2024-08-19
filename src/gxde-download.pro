@@ -17,9 +17,9 @@ QT += sql
 
 #greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-TARGET = deepin-download
+TARGET = gxde-download
 TEMPLATE = app
-RESOURCES = deepin_download.qrc
+RESOURCES = gxde_download.qrc
 CONFIG += link_pkgconfig
 CONFIG += c++11
 PKGCONFIG += dtkwidget
@@ -102,7 +102,7 @@ HEADERS += \
 
 #多国语言翻译
 
-TRANSLATIONS += translations/deepin-download.ts
+TRANSLATIONS += translations/gxde-download.ts
 
 ##########################################################################################################
 
@@ -116,13 +116,13 @@ target.path = $${PREFIX}/bin
 
 icon.path = $$PREFIX/share/icons/hicolor/scalable/apps
 
-icon.files = $$PWD/Resources/images/deepin-download.svg
+icon.files = $$PWD/Resources/images/gxde-download.svg
 
 #安装desktop文件
 
 desktop.path = $$PREFIX/share/applications
 
-desktop.files = $$PWD/deepin-download.desktop
+desktop.files = $$PWD/gxde-download.desktop
 
 translations.path = $${PREFIX}/share/$${TARGET}/translations
 translations.files = $$PWD/translations/*.qm

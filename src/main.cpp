@@ -100,13 +100,13 @@ int main(int argc, char *argv[])
      * 版权信息
      */
     const char *descriptionText = QT_TRANSLATE_NOOP("MainWindow",
-                                                    "Deepin Downloader is a built-in downloading tool of "
-                                                    "deepin operating system, supporting single and batch download."
+                                                    "GXDE Downloader is a built-in downloading tool of "
+                                                    "GXDE operating system, supporting single and batch download."
                                                     );
 
-    const QString acknowledgementLink = "https://www.deepin.org/acknowledgments/deepin-download";
+    const QString acknowledgementLink = "https://gitee.com/GXDE-OS/gxde-download";
 
-    QIcon appico = QIcon::fromTheme("deepin-download");
+    QIcon appico = QIcon::fromTheme("gxde-download");
 
     if( appico.isNull() ){
 
@@ -117,7 +117,7 @@ int main(int argc, char *argv[])
     //app.setProductIcon(QPixmap::fromImage(QImage(Utils::getQrcPath("logo_24.svg"))));
     app.setProductIcon( appico );
     app.setWindowIcon( appico );
-    app.setProductName(DApplication::translate("MainWindow", "Deepin Downloader"));
+    app.setProductName(DApplication::translate("MainWindow", "GXDE Downloader"));
     app.setApplicationDescription(DApplication::translate("MainWindow", descriptionText) + "\n");
     app.setApplicationAcknowledgementPage(acknowledgementLink);
 
