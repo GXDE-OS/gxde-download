@@ -1,12 +1,12 @@
 [Desktop Entry]
 Categories=Application;System;Settings
 Comment=A general Linux download
-Comment[zh_CN]=GXDE 下载工具
+Comment[zh_CN]=极星操作系统下载工具
 Encoding=UTF-8
 Exec=gxde-download
 Icon=gxde-download
 Name=GXDE Downloader
-Name[zh_CN]=GXDE 下载器
+Name[zh_CN]=极星下载器
 StartupNotify=true
 Terminal=false
 Type=Application
