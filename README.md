@@ -1,4 +1,4 @@
-Deepin DownloadTool
+GXDE DownloadTool
 =============================
 
  Download Tools for Aria2c
