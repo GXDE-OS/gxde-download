@@ -149,11 +149,17 @@ void NewDown::SelectSaveDir(){
                                                      QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks );
 
 
-    checkDir( dir  );
+    if ( !dir.isEmpty() ){
+        checkDir( dir );
+    }
 
 }
 
 bool NewDown::checkDir( QString path ){
+
+    if ( path.isEmpty() ){
+        return false;
+    }
 
     QFile file( path + "/testcreate.gc" );
     if ( file.open( QIODevice::ReadWrite | QIODevice::Text ) ){
@@ -184,6 +190,7 @@ bool NewDown::checkDir( QString path ){
     }
     file.close();
     QFile::remove( path + "/testcreate.gc" );
+    return !this->SavePath.isEmpty();
 }
 
 
@@ -243,12 +250,12 @@ int NewDown::Button2Click(){
 
                case 1:
 
-                   mainUI->AppendDownMetalink( this->dPath ,this->SavePath );
+                    mainUI->AppendDownBT( this->dPath ,this->SavePath );
                    break;
 
                case 2:
 
-                   mainUI->AppendDownBT( this->dPath ,this->SavePath );
+                    mainUI->AppendDownMetalink( this->dPath ,this->SavePath );
                    break;
 
                //default:
@@ -258,9 +265,11 @@ int NewDown::Button2Click(){
 
        }else{
 
-         QStringList urlStrList =  urlStrs.split("\n");
+          QStringList urlStrList =  urlStrs.split(QRegExp("[\\r\\n]+"), QString::SkipEmptyParts);
 
-         foreach ( QString url ,  urlStrList) {
+          foreach ( QString url ,  urlStrList) {
+
+               url = url.trimmed();
 
               qDebug() << "url :"  << url;
 
@@ -336,7 +345,7 @@ void NewDown::Button3Click(){
 void NewDown::openFileDlg(){
 
     dtype = 0;
-    QString path = QFileDialog::getOpenFileName(this, "Open BitTorrent | Metalink file", ".", "BTorrent Metalink Files(*.torrent *.metalink)" );
+    QString path = QFileDialog::getOpenFileName(this, "Open BitTorrent | Metalink file", ".", "BTorrent Metalink Files(*.torrent *.metalink *.meta4)" );
 
     if( path.length() != 0 ) {
 
@@ -345,7 +354,7 @@ void NewDown::openFileDlg(){
         int i =  path.lastIndexOf(".");
         QString zName = path.mid( i , path.length() - i );
 
-        if( zName != ".torrent" && zName !=".metalink"   ){
+        if( zName != ".torrent" && zName !=".metalink" && zName != ".meta4" ){
 
 
         }else{
@@ -354,7 +363,7 @@ void NewDown::openFileDlg(){
             this->Edit1->setText( path );
 
             if ( zName == ".torrent"  )  dtype = 1 ;
-            if ( zName == ".metalink" )  dtype = 2 ;
+            if ( zName == ".metalink" || zName == ".meta4" )  dtype = 2 ;
         }
     }
 
@@ -392,6 +401,10 @@ QString NewDown::GetThunderUrl(  QString thunder_url ){
 
 bool NewDown::existUrl(const QString &strText)
 {
+    if ( strText.startsWith("magnet:?", Qt::CaseInsensitive) ){
+        return true;
+    }
+
     bool bResult = false;
     QString strTempText = strText;
     QString strUrlExp = "((http|https|ftp)://|(www)\\.)(\\w+)(\\.?[\\.a-z0-9/:?%&=\\-_+#;]*)"; //url正则
@@ -407,7 +420,6 @@ bool NewDown::existUrl(const QString &strText)
     }
     return bResult; //返回是否包含url
 }
-
 
 
 

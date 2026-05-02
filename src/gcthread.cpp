@@ -120,7 +120,7 @@ void GCThread::SendMessage( QString jsonrpc ,QString id ,QString method, QJsonAr
 
     qDebug() << "======================= SendMessage === "+ method +" =================================== ";
 
-    QNetworkAccessManager *manager = new QNetworkAccessManager;
+    QNetworkAccessManager *manager = new QNetworkAccessManager( this );
 
     QJsonObject obj;
 
@@ -133,12 +133,13 @@ void GCThread::SendMessage( QString jsonrpc ,QString id ,QString method, QJsonAr
         obj.insert("params", params );
     }
 
-    QNetworkRequest *request = new QNetworkRequest;
-    request->setUrl(QUrl(  "http://localhost:19799/jsonrpc" ) );
+    QNetworkRequest request;
+    request.setUrl(QUrl(  "http://localhost:19799/jsonrpc" ) );
 
-    request->setHeader(QNetworkRequest::ContentTypeHeader, "application/json" );
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json" );
 
-    manager->post( *request, QJsonDocument( obj ).toJson() );
+    QNetworkReply *networkReply = manager->post( request, QJsonDocument( obj ).toJson() );
+    networkReply->setParent( manager );
 
 
     connect( manager,
@@ -146,10 +147,9 @@ void GCThread::SendMessage( QString jsonrpc ,QString id ,QString method, QJsonAr
              this,
              [=](QNetworkReply* reply){
 
-                 this->GCNetworkReply(reply, method );
-                 manager->deleteLater();
-                 manager->destroyed();
-             });
+                  this->GCNetworkReply(reply, method );
+                  manager->deleteLater();
+              });
 
    //
 }
@@ -191,6 +191,7 @@ void GCThread::GCNetworkReply( QNetworkReply* reply,const QString method ){
               qDebug() <<"非标准 JSON 格式返回";
            }
        }
+       reply->deleteLater();
 }
 
 
@@ -395,7 +396,6 @@ void GCThread::Aria2cRMsg_tellMessage( QJsonObject nObj ){
        emit NetworkReply( tbList );
 
 }
-
 
 
 

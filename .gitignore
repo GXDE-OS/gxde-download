@@ -2,3 +2,16 @@ build/
 build*/
 *.pro.user*
 *.qm
+
+# qmake / Qt generated files
+.qmake.stash
+Makefile
+moc_*.cpp
+moc_predefs.h
+qrc_*.cpp
+
+# Compiler outputs
+*.o
+
+# Local build binary
+/gxde-download

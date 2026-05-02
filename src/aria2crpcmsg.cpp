@@ -72,6 +72,13 @@ void Aria2cRPCMsg::SendMsgAria2c_addUri( QString uri ,QString id ){
     item.append( uri );
     json_array.append(item);
 
+    if ( !pendingSavePath.isEmpty() ){
+        QJsonObject option;
+        option.insert( "dir", pendingSavePath );
+        json_array.append( option );
+        pendingSavePath.clear();
+    }
+
     SendRPC2Aria2c( "aria2.addUri", json_array ,id );
 
 }
@@ -93,6 +100,15 @@ void Aria2cRPCMsg::SendMsgAria2c_addTorrent( QString filename ,QString id  ){
 
     QJsonArray item;
     item.append( torrent );
+
+    if ( !pendingSavePath.isEmpty() ){
+        QJsonArray uris;
+        QJsonObject option;
+        option.insert( "dir", pendingSavePath );
+        item.append( uris );
+        item.append( option );
+        pendingSavePath.clear();
+    }
 
     SendRPC2Aria2c( "aria2.addTorrent", item ,id);
 
@@ -125,6 +141,13 @@ void Aria2cRPCMsg::SendMsgAria2c_addMetalink(  QString filename,QString id  ){
 
     QJsonArray item;
     item.append( metalink );
+
+    if ( !pendingSavePath.isEmpty() ){
+        QJsonObject option;
+        option.insert( "dir", pendingSavePath );
+        item.append( option );
+        pendingSavePath.clear();
+    }
 
     SendRPC2Aria2c( "aria2.addMetalink", item , id );
 
@@ -570,15 +593,7 @@ void Aria2cRPCMsg::SendMsgAria2c_system_listNotifications(){
 
 void Aria2cRPCMsg::SendMsgAria2c_SetSavePath( QString SavePath  ){
 
-
-    QJsonArray item;
-    QJsonObject option;
-
-    option.insert( "dir",SavePath );
-
-    item.append( option );
-
-    SendRPC2Aria2c( "aria2.changeGlobalOption" , item ,"0" );
+    pendingSavePath = SavePath;
 
 }
 
@@ -2327,7 +2342,6 @@ QString Aria2cRPCMsg::GetFileName( QString path ){
     return filename;
 
 }
-
 
 
 

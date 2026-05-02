@@ -30,6 +30,7 @@
 #include <QThread>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
+#include <QTcpSocket>
 
 #include <QDBusInterface>
 #include <QDBusMessage>
@@ -66,6 +67,15 @@ MainWindow::~MainWindow(){
 
     qDebug() << "~MainWindow()";
 
+    if ( threadTimer ){
+        threadTimer->stop();
+        delete threadTimer;
+    }
+    delete workThread;
+    if ( thread ){
+        thread->quit();
+        thread->wait( 1000 );
+    }
     delete this->downDB;
     delete this->aria2c;
     delete this->newDownDlg;
@@ -177,10 +187,8 @@ void MainWindow::initMainWindow(){
     thread = new QThread(this);
     workThread = new GCThread( this->downDB );
 
-    //QObject::connect( thread, SIGNAL(started()), workThread, SLOT( work() )/*,Qt::AutoConnection*/ );
-
-    workThread->moveToThread( thread );
-    thread->start();
+    // SQLite connections are thread-bound; keep the polling object in the GUI
+    // thread because it shares downDB with MainWindow.
 
     QObject::connect( workThread, SIGNAL( NetworkReply( QList<TBItem*>* ) ) , this, SLOT( OnNetworkReply( QList<TBItem*>* ) ) ,Qt::QueuedConnection );
     QObject::connect( workThread, SIGNAL( NetworkReplyNode( TBItem* ) ) , this, SLOT( OnNetworkReplyNode( TBItem* ) ) ,Qt::QueuedConnection );
@@ -870,7 +878,7 @@ void MainWindow::AgainDown(){
 
 void MainWindow::CopyUrlToBoard(){
 
-    GCMessageBox *errorbox;
+    GCMessageBox *errorbox = NULL;
     const QModelIndexList selected = downListView->selectionModel()->selectedRows();
     foreach( const QModelIndex & index, selected){
 
@@ -899,7 +907,7 @@ void MainWindow::CopyUrlToBoard(){
 
 void MainWindow::OpenDownFile(){
 
-    GCMessageBox *errorbox;
+    GCMessageBox *errorbox = NULL;
     const QModelIndexList selected = downListView->selectionModel()->selectedRows();
     foreach( const QModelIndex & index, selected){
 
@@ -969,7 +977,7 @@ void MainWindow::DeleteAllRecord(){
     }
 
     //QList<DDRecord> t = this->downDB->ReadRecycleList();
-    GCMessageBox *errorbox;
+    GCMessageBox *errorbox = NULL;
     int errorCount = 0;
     for( int i = 0 ; i < t.size() ; i++ ){
 
@@ -1016,7 +1024,7 @@ void MainWindow::DeleteAllRecord(){
 */
 void MainWindow::DeleteDownFileDB(){
 
-    GCMessageBox *errorbox;
+    GCMessageBox *errorbox = NULL;
     int errorCount = 0;
     const QModelIndexList selected = downListView->selectionModel()->selectedRows();
     foreach( const QModelIndex & index, selected){
@@ -1336,7 +1344,7 @@ void MainWindow::OpenLinkFile( QString filename ){
 
         AppendDownBT( filename );
 
-    } else if ( "metalink" == TypeName  ){
+    } else if ( "metalink" == TypeName || "meta4" == TypeName ){
 
         AppendDownMetalink( filename );
     }
@@ -2167,117 +2175,52 @@ void MainWindow::resizeEvent(QResizeEvent* event){
 =========================================================================*/
 int MainWindow::initAria2cWork(){
 
-    QProcess *ps  = new QProcess;
-    QStringList options;
-    options << "-c";
-    //options << "ps aux | grep deepin_aria2c";
-    options << "ps aux | grep aria2c";
+    const QString RPCPort = "19799";
 
-    ps->start( "/bin/bash", options );
-    ps->waitForFinished();
-
-    QString strTemp = "";
-    QStringList tmpList;
-    strTemp = QString::fromLocal8Bit( ps->readAllStandardOutput() );
-    tmpList.clear();
-    tmpList = strTemp.split("\n");
-    QString Z = "";
-    foreach( QString str,tmpList ){
-
-       if ( str == ""  ){
-           continue;
-       }
-       if ( str.indexOf( "grep aria2c"  ) < 0 ){
-           qDebug()<< str;
-           Z = str;
-           break;
-       }else{
-           continue;
-       }
+    QTcpSocket socket;
+    socket.connectToHost( "127.0.0.1", RPCPort.toUShort() );
+    if ( socket.waitForConnected( 300 ) ){
+        socket.disconnectFromHost();
+        qDebug() << "aria2 RPC is already available on port" << RPCPort;
+        return 1;
     }
 
-    //qDebug()<< Z;
-    int pid = 0;
-    if ( Z != "" ){
-        QStringList tmpArray = Z.split(" ");
-        int i = 0;
-        foreach ( QString tmp, tmpArray) {
-            if ( tmp.trimmed() == "" ){
-                continue;
-            }
-            i++;
-            //qDebug() << "==>"<< i <<tmp.trimmed() ;
-            if( i == 2 ){
-                qDebug() << "============== deepin_aria2c PID ============>"<< tmp.trimmed() ;
-                bool ok;
-                pid = tmp.trimmed().toInt( &ok , 10 );
-                break;
-            }
-        }
-    }else{
-        //qDebug() << "ariar2c 不在进程中...";
-        //ShowMessageTip(  "ariar2c 不在进程中..." );
-    }
+    qDebug() << "aria2 RPC is not available, starting aria2c";
 
-    if ( pid != 0 ){
+    QString HomeDir = QDir::homePath();
+    QString Downloads = HomeDir + "/Downloads";
+    QString SessionFile = CacheDir + "/deepin-aria2c.session";
+    QString SaveTime = "60";
 
-        qDebug() << "PID" << pid;
+    QDir().mkpath( CacheDir );
+    QDir().mkpath( Downloads );
+    QFile session( SessionFile );
+    session.open( QIODevice::Append );
+    session.close();
 
-    }else{
+    QString command = "/usr/bin/aria2c";
+    QStringList args;
+    args.append( "--dir="+ Downloads );
+    args.append( "--input-file="+ SessionFile );
+    args.append( "--save-session="+ SessionFile  );
+    args.append( "--save-session-interval="+ SaveTime );
+    args.append( "--enable-rpc=true" );
+    args.append( "--rpc-listen-port=" + RPCPort );
+    args.append( "--rpc-listen-all=false" );
+    args.append( "--rpc-allow-origin-all=true" );
+    args.append( "--rpc-save-upload-metadata=true" );
+    args.append( "--continue=true" );
+    args.append( "--max-connection-per-server=16" );
+    args.append( "--split=16" );
+    args.append( "--min-split-size=1M" );
+    args.append( "--file-allocation=none" );
+    args.append( "--check-certificate=false" );
+    args.append( "--disable-ipv6" );
 
-        qDebug() << "ariar2c 不在进程中...";
+    bool started = QProcess::startDetached( command, args );
+    qDebug() << "start aria2c" << started;
 
-        QString HomeDir = QDir::homePath();
-        QString Downloads = HomeDir + "/Downloads";
-        QString SessionFile = CacheDir + "/deepin-aria2c.session";
-        QString SaveTime = "60";
-        QString RPCPort = "19799";
-
-        QProcess touch(0);
-        QString cmd = "/usr/bin/touch";
-        QStringList sessionfp;
-        sessionfp.append( SessionFile );
-        touch.start( cmd , sessionfp  );
-        touch.waitForFinished();
-
-        QString path;
-        QDir dir;
-        path = dir.currentPath();
-        //aria2c --enable-rpc=true -c --disable-ipv6 --check-certificate=false --dir=/home/gaochong/Downloads/ --rpc-save-upload-metadata=true  --input-file=/home/gaochong/aria2c.session --save-session=/home/gaochong/aria2c.session --save-session-interval=60
-        QProcess *aria2c = new QProcess;
-        //QString command = path + "/deepin_aria2c";
-        QString command = "/usr/bin/aria2c";
-
-        QStringList args;
-        /** 基本参数　*/
-        args.append( "--dir="+ Downloads );
-        args.append( "--input-file="+ SessionFile );
-        args.append( "--save-session="+ SessionFile  );
-        args.append( "--save-session-interval="+ SaveTime );
-
-        /** RPC 参数　*/
-        args.append( "--enable-rpc=true" );
-        args.append( "--rpc-listen-port=" + RPCPort );  //rpc 通讯端口
-        args.append( "--rpc-allow-origin-all=true");
-        args.append( "--rpc-save-upload-metadata=true");
-
-        /** 校验相关的参数　*/
-        args.append( "--check-certificate=false");
-        args.append( "--disable-ipv6");
-        //args.append( "-c");
-
-        ps->start( command, args );
-
-        qDebug() << "发起进程" << ps->error() ;
-
-        /**  不提示用户*/
-        //ShowMessageTip(  "发起进程 ariar2c 进程中." + ps->error() );
-
-     }
-
-
-    //qDebug() << QDir::homePath();
-    return pid;
+    return started ? 1 : 0;
 }
 
 
@@ -2323,13 +2266,6 @@ void MainWindow::slotActionInvoked(uint id, QString action )
 {
     Q_EMIT show();
 }
-
-
-
-
-
-
-
 
 
 

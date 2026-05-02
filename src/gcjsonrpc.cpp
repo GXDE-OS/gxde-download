@@ -28,7 +28,7 @@ void GCJsonRPC::SendMessage( QString jsonrpc ,QString id ,QString method, QJsonA
 
     qDebug() << "======================= SendMessage === "+ method +" =================================== ";
 
-    QNetworkAccessManager *manager = new QNetworkAccessManager();
+    QNetworkAccessManager *manager = new QNetworkAccessManager( this );
 
     QJsonObject obj;
 
@@ -41,12 +41,13 @@ void GCJsonRPC::SendMessage( QString jsonrpc ,QString id ,QString method, QJsonA
         obj.insert("params", params );
     }
 
-    QNetworkRequest *request = new QNetworkRequest;
-    request->setUrl(QUrl( actionResult ) );
+    QNetworkRequest request;
+    request.setUrl(QUrl( actionResult ) );
 
-    request->setHeader(QNetworkRequest::ContentTypeHeader, "application/json" );
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json" );
 
-    QNetworkReply  *UU = manager->post( *request, QJsonDocument( obj ).toJson() );
+    QNetworkReply  *reply = manager->post( request, QJsonDocument( obj ).toJson() );
+    reply->setParent( manager );
 
     //qDebug() << "51"<<UU->error()<<actionResult << UU->isRunning();
     QObject::connect( manager,
@@ -54,10 +55,9 @@ void GCJsonRPC::SendMessage( QString jsonrpc ,QString id ,QString method, QJsonA
              this,
              [=](QNetworkReply* reply){
 
-                 this->GCNetworkReply(reply, method );
-                 manager->deleteLater();
-                 manager->destroyed();
-             });
+                  this->GCNetworkReply(reply, method );
+                  manager->deleteLater();
+              });
 
     //QThread::sleep( 5 );
 }
@@ -93,9 +93,9 @@ void GCJsonRPC::GCNetworkReply( QNetworkReply* reply,const QString method ){
            }
 
        }
+       reply->deleteLater();
        //this->deleteLater();
 }
-
 
 
 

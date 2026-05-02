@@ -26,6 +26,7 @@ private:
    GCJsonRPC *gcjsonrpc;
 
    QMap<QString,QString> gidList;
+   QString pendingSavePath;
 
    /** 发送消息 */
   void SendRPC2Aria2c( QString dz , QString id );
