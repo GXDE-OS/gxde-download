@@ -806,6 +806,7 @@ void MainWindow::RightTMenu( int itemID ){
     switch( itemID ){
 
     case 101:     //时间
+         column = 7;
          break;
     case 102:     //名字
          column = 0;
@@ -814,7 +815,7 @@ void MainWindow::RightTMenu( int itemID ){
          column = 1;
          break;
     case 104:     //状态
-         column = 5;
+         column = 4;
          break;
     default:
          break;
@@ -1503,6 +1504,7 @@ void MainWindow::OnNetworkReplyNode( TBItem* tbitem ){
     }
 
 
+    delete tbitem;
 
 }
 
@@ -1600,6 +1602,10 @@ void MainWindow::OnNetworkReply( QList<TBItem*> *tbList ){
     }
 
 
+    for( int i = 0 ; i < tbList->size() ; i++  ){
+        delete tbList->at(i);
+    }
+    delete tbList;
 
 }
 
@@ -1904,6 +1910,10 @@ void MainWindow::ShowContextMenu( const QPoint &point ){
         QModelIndex  modelindex = this->downListView->indexAt( point );
         qDebug() << "ROW ======> " << modelindex.row() + 1;
 
+        if ( modelindex.isValid() && !downListView->selectionModel()->isRowSelected( modelindex.row(), QModelIndex() ) ){
+            downListView->selectRow( modelindex.row() );
+        }
+
         const QModelIndexList selected = downListView->selectionModel()->selectedRows();
 
         int rowcount = downListView->m_dataModel->rowCount();
@@ -1935,7 +1945,7 @@ void MainWindow::ShowContextMenu( const QPoint &point ){
         RMenuItem[6] = new QAction( tr("Copy download link") ,this);       //复制下载链接
         RMenuItem[6]->setData( "7");
 
-        RMenuItem[7] = new QAction( "Delete download records" ,this);      //删除下载记录
+        RMenuItem[7] = new QAction( tr("Delete download records") ,this);      //删除下载记录
         RMenuItem[7]->setData( "8");
 
         RMenuItem[8] = new QAction( tr("Empty Trash") ,this);              //清空回收站
@@ -2266,9 +2276,6 @@ void MainWindow::slotActionInvoked(uint id, QString action )
 {
     Q_EMIT show();
 }
-
-
-
 
 
 

@@ -273,7 +273,7 @@ void GCThread::Aria2cRMsg_tellStatus( QJsonObject nObj ){
 
 
          int  bitfield = 0;
-         if ( completedLength_long >0 ){
+         if ( totalLength_long > 0 && completedLength_long >0 ){
 
            bitfield = qRound( completedLength_long * 100.0 / totalLength_long );
          }
@@ -371,7 +371,7 @@ void GCThread::Aria2cRMsg_tellMessage( QJsonObject nObj ){
              long completedLength_long = completedLength.toLong( &ok,10 );
 
              int  bitfield = 0;
-             if ( completedLength_long >0 ){
+             if ( totalLength_long > 0 && completedLength_long >0 ){
                bitfield = qRound( completedLength_long * 100.0 / totalLength_long );
              }
 
@@ -396,8 +396,6 @@ void GCThread::Aria2cRMsg_tellMessage( QJsonObject nObj ){
        emit NetworkReply( tbList );
 
 }
-
-
 
 
 

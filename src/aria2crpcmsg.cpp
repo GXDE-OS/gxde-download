@@ -1237,7 +1237,7 @@ void Aria2cRPCMsg::Aria2cRMsg_tellStatus( QJsonObject nObj ){
          ////qDebug() << "completedLength_long " << completedLength_long;
 
          int  bitfield = 0;
-         if ( completedLength_long >0 ){
+         if ( totalLength_long > 0 && completedLength_long >0 ){
 
            bitfield = qRound( completedLength_long * 100.0 / totalLength_long );
          }
@@ -2342,8 +2342,6 @@ QString Aria2cRPCMsg::GetFileName( QString path ){
     return filename;
 
 }
-
-
 
 
 
